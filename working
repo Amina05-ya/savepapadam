@@ -1,0 +1,342 @@
+#include <SPI.h>
+#include <MFRC522.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <Servo.h>
+
+// =========================
+// PIN DEFINITIONS
+// =========================
+
+#define SS_PIN 10
+#define RST_PIN 9
+
+#define GREEN_LED 2
+#define BUZZER 3
+#define IR_SENSOR 4
+#define SERVO_PIN 5
+#define RED_LED 6
+
+// =========================
+// RFID
+// =========================
+
+MFRC522 rfid(SS_PIN, RST_PIN);
+
+// =========================
+// LCD
+// =========================
+
+// Most I2C LCD modules use 0x27.
+// If yours does not work, try 0x3F.
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+// =========================
+// SERVO
+// =========================
+
+Servo coverServo;
+
+// Servo positions
+#define CLOSED_ANGLE 0
+#define OPEN_ANGLE 180
+
+// =========================
+// AUTHORIZED RFID UID
+// =========================
+
+// CHANGE THIS to YOUR CARD UID.
+//
+// Example:
+// F3 37 D6 4F
+
+byte authorizedUID[] = {
+  0xF3,
+  0x37,
+  0xD6,
+  0x4F
+};
+
+byte authorizedUIDSize = 4;
+
+
+// ======================================================
+// SETUP
+// ======================================================
+
+void setup()
+{
+  Serial.begin(9600);
+
+  // RFID
+  SPI.begin();
+  rfid.PCD_Init();
+
+  // LCD
+  lcd.init();
+  lcd.backlight();
+
+  // LEDs
+  pinMode(GREEN_LED, OUTPUT);
+  pinMode(RED_LED, OUTPUT);
+
+  // Buzzer
+  pinMode(BUZZER, OUTPUT);
+
+  // IR sensor
+  pinMode(IR_SENSOR, INPUT);
+
+  // Servo
+  coverServo.attach(SERVO_PIN);
+  coverServo.write(CLOSED_ANGLE);
+
+  // Initial state
+  digitalWrite(GREEN_LED, LOW);
+  digitalWrite(RED_LED, LOW);
+  digitalWrite(BUZZER, LOW);
+
+  // LCD startup
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("PappadamGuard");
+  lcd.setCursor(0, 1);
+  lcd.print("System Ready");
+
+  Serial.println("================================");
+  Serial.println("      PAPPADAMGUARD");
+  Serial.println("================================");
+  Serial.println("RFID System Ready");
+  Serial.println("Scan your RFID card...");
+
+  delay(2000);
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Scan RFID Card");
+}
+
+
+// ======================================================
+// LOOP
+// ======================================================
+
+void loop()
+{
+  // -----------------------------------------
+  // IR SENSOR
+  // -----------------------------------------
+
+  int irState = digitalRead(IR_SENSOR);
+
+  /*
+     Many IR obstacle sensors give LOW
+     when an object is detected.
+
+     This does NOT open the cover.
+     It simply displays an approach message.
+  */
+
+  if (irState == LOW)
+  {
+    lcd.setCursor(0, 0);
+    lcd.print("Person Detected ");
+
+    lcd.setCursor(0, 1);
+    lcd.print("Scan RFID Card  ");
+  }
+  else
+  {
+    lcd.setCursor(0, 0);
+    lcd.print("Scan RFID Card  ");
+    lcd.setCursor(0, 1);
+    lcd.print("                ");
+  }
+
+
+  // -----------------------------------------
+  // CHECK FOR RFID CARD
+  // -----------------------------------------
+
+  if (!rfid.PICC_IsNewCardPresent())
+  {
+    return;
+  }
+
+  if (!rfid.PICC_ReadCardSerial())
+  {
+    return;
+  }
+
+
+  // -----------------------------------------
+  // PRINT UID
+  // -----------------------------------------
+
+  Serial.print("Card UID: ");
+
+  for (byte i = 0; i < rfid.uid.size; i++)
+  {
+    if (rfid.uid.uidByte[i] < 0x10)
+    {
+      Serial.print("0");
+    }
+
+    Serial.print(rfid.uid.uidByte[i], HEX);
+
+    if (i < rfid.uid.size - 1)
+    {
+      Serial.print(" ");
+    }
+  }
+
+  Serial.println();
+
+
+  // -----------------------------------------
+  // CHECK AUTHORIZATION
+  // -----------------------------------------
+
+  bool authorized = checkAuthorizedCard();
+
+
+  if (authorized)
+  {
+    accessGranted();
+  }
+  else
+  {
+    accessDenied();
+  }
+
+
+  // -----------------------------------------
+  // STOP RFID COMMUNICATION
+  // -----------------------------------------
+
+  rfid.PICC_HaltA();
+  rfid.PCD_StopCrypto1();
+
+  delay(500);
+}
+
+
+// ======================================================
+// CHECK AUTHORIZED UID
+// ======================================================
+
+bool checkAuthorizedCard()
+{
+  // First check UID length
+
+  if (rfid.uid.size != authorizedUIDSize)
+  {
+    return false;
+  }
+
+  // Compare every UID byte
+
+  for (byte i = 0; i < authorizedUIDSize; i++)
+  {
+    if (rfid.uid.uidByte[i] != authorizedUID[i])
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
+// ======================================================
+// ACCESS GRANTED
+// ======================================================
+
+void accessGranted()
+{
+  Serial.println("Eduthoooo!!");
+
+  // LCD
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Eduthoooo!!");
+
+  lcd.setCursor(0, 1);
+  lcd.print("Pappadam Granted");
+
+  // Green LED ON
+  digitalWrite(GREEN_LED, HIGH);
+
+  // Red LED OFF
+  digitalWrite(RED_LED, LOW);
+
+  // Short confirmation beep
+  digitalWrite(BUZZER, HIGH);
+  delay(150);
+  digitalWrite(BUZZER, LOW);
+
+  // Open cover
+  coverServo.write(OPEN_ANGLE);
+
+  delay(4000);
+
+  // Close cover
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Closing Cover");
+
+  coverServo.write(CLOSED_ANGLE);
+
+  delay(1000);
+
+  digitalWrite(GREEN_LED, LOW);
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Scan RFID Card");
+}
+
+
+// ======================================================
+// ACCESS DENIED
+// ======================================================
+
+void accessDenied()
+{
+  Serial.println("Poi vere pani nokk!!!");
+  
+  
+  // LCD
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Poikoo!!!");
+
+  lcd.setCursor(0, 1);
+  lcd.print(" Pappadam ILLA!");
+
+  // Green LED OFF
+  digitalWrite(GREEN_LED, LOW);
+
+  // Red LED ON
+  digitalWrite(RED_LED, HIGH);
+
+  // Alarm
+  for (int i = 0; i < 30; i++)
+  {
+    digitalWrite(BUZZER, HIGH);
+    delay(70);
+
+    digitalWrite(BUZZER, LOW);
+    delay(50);
+  }
+
+  // Servo stays closed
+  coverServo.write(CLOSED_ANGLE);
+
+  delay(1000);
+
+  digitalWrite(RED_LED, LOW);
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Scan RFID Card");
+}
