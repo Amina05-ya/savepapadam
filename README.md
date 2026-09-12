@@ -13,6 +13,8 @@
 - Team Lead: [Amina S] - [COLLEGE OF ENGINEERING PERUMON]
 - Member 2: [Anamika V S] - [COLLEGE OF ENGINEERING PERUMON]
 
+### Full Video Drive
+"[building.mp4](https://drive.google.com/drive/folders/1ezg8YOiUaK-QnOr_XTsXlkxS2MEuz2d9)"
 
 ### Project Description
 ### PappadamGuard 🛡️🍘
@@ -260,7 +262,7 @@ Buzzer
 Power supply
 
 ![Build](Add photos of build process here)
-"C:\Users\HP\OneDrive\Documents\papad building.mp4"
+"[C:\Users\HP\OneDrive\Documents\papad building.mp4](https://drive.google.com/file/d/1PvsQkQUp-rYtq078YbUWFjEmmoe5It3S/view?usp=sharing)"
 "C:\Users\HP\OneDrive\Documents\building2.mp4"
 *Explain the build steps*
 The build process started by assembling the Arduino UNO, RC522 RFID reader, I2C LCD, IR sensor, servo motor, buzzer, LEDs, and other components on a breadboard. The RFID reader, LCD, and sensors were connected to the Arduino according to the circuit design. The servo motor was attached to the protective cover. The Arduino code was uploaded using Arduino IDE and tested for RFID access, LED indications, buzzer alerts, LCD messages, and servo movement. Finally, a phone camera connected through DroidCam was integrated with the Python OpenCV program to detect pappadam cracks and calculate the damage percentage.
@@ -276,7 +278,8 @@ The final build is a compact smart security system designed to protect a pappada
 ### Project Demo
 # Video
 [Add your demo video link here]
-"C:\Users\HP\OneDrive\Documents\papad video.mp4"
+
+"[C:\Users\HP\OneDrive\Documents\papad video.mp4](https://drive.google.com/file/d/1PvsQkQUp-rYtq078YbUWFjEmmoe5It3S/view?usp=sharing)"
 ### Brief Idea of the Project
 
 PappadamGuard is a fun smart security and monitoring system designed to protect a pappadam from unauthorized access and damage. It uses an RFID card for authentication, an IR sensor to detect approaching users, and a servo motor to open or close the protective cover. LEDs, a buzzer, and an LCD provide status messages and alerts. A phone camera with Python and OpenCV detects cracks in the pappadam and displays the estimated damage percentage.
